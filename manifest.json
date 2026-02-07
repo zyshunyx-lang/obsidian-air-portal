@@ -5,6 +5,6 @@
 	"minAppVersion": "0.15.0",
 	"description": "Turn your vault into a local web server. Transfer, edit, and manage notes wirelessly via browser. (无线传送门)",
 	"author": "zyshunyx",
-	"authorUrl": "https://github.com/zyshunyx",
+	"authorUrl": "https://github.com/zyshunyx-lang/obsidian-air-portal",
 	"isDesktopOnly": true
 }
