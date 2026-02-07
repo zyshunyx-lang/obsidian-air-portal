@@ -3,8 +3,8 @@ import * as http from 'http';
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
-
-const QRCode = require('qrcode');
+// [Fix 1] Forbidden require() -> import
+import * as QRCode from 'qrcode';
 
 // --- i18n Dictionary ---
 const TR = {
@@ -36,10 +36,11 @@ const TR = {
         risk_desc_strong: '直接覆盖且无法撤销',
         risk_footer: '免责声明：本插件仅在局域网工作。作者不对因覆盖操作导致的数据丢失负责。请定期备份。',
         
-        setting_port: '服务端口',
+        // [Fix 9] Sentence case for UI text (Optional adjustment in translation keys)
+        setting_port: '服务端口 (Server port)',
         setting_port_desc: '默认为 27123。',
         btn_save_restart: '保存并重启',
-        setting_ip: '手动指定 IP',
+        setting_ip: '手动指定 IP (Manual IP)',
         setting_ip_desc: '如果自动识别失败，请手动填入。',
         btn_update_ip: '更新显示',
         
@@ -85,17 +86,17 @@ const TR = {
         guide_4: 'Upload, edit, or download notes from your phone.',
         
         risk_title: '⚠️ Warning & Disclaimer',
-        risk_warning: 'Overwrite Warning:',
+        risk_warning: 'Overwrite warning:',
         risk_desc: 'Uploading files with same names will ',
         risk_desc_strong: 'OVERWRITE permanently',
         risk_footer: 'Disclaimer: LAN only. Author is not responsible for data loss. Please backup regularly.',
         
-        setting_port: 'Server Port',
+        setting_port: 'Server port',
         setting_port_desc: 'Default 27123.',
-        btn_save_restart: 'Save & Restart',
+        btn_save_restart: 'Save & restart',
         setting_ip: 'Manual IP',
         setting_ip_desc: 'Enter manually if auto-detection fails.',
-        btn_update_ip: 'Update View',
+        btn_update_ip: 'Update view',
         
         author: 'Developed by: Obsidian Fan',
         github: 'GitHub / Issues',
@@ -148,11 +149,14 @@ export default class LanEditorPlugin extends Plugin {
 			// @ts-ignore
 			this.app.setting.openTabById(this.manifest.id);
 		});
-		this.startServer();
+        // [Fix 3] Promise must be awaited or marked as void
+		void this.startServer();
 		this.addSettingTab(new LanEditorSettingTab(this.app, this));
 	}
 
-	onunload() { this.stopServer(); }
+	onunload() { 
+        this.stopServer(); 
+    }
 
 	getLocalIP() {
 		if (this.settings.manualIP) return this.settings.manualIP;
@@ -176,8 +180,9 @@ export default class LanEditorPlugin extends Plugin {
 
 		return new Promise((resolve) => {
 			try {
-				this.server = http.createServer(async (req, res) => {
-					await this.handleRequest(req, res, vaultPath);
+				this.server = http.createServer((req, res) => {
+                    // [Fix 3] Handle async promise
+					void this.handleRequest(req, res, vaultPath);
 				});
 
 				this.server.listen(this.settings.port, () => {
@@ -186,7 +191,8 @@ export default class LanEditorPlugin extends Plugin {
 					resolve(true);
 				});
 
-				this.server.on('error', (e: any) => {
+                // [Fix 2] Unexpected any -> Error
+				this.server.on('error', (e: NodeJS.ErrnoException) => {
 					if (e.code === 'EADDRINUSE') {
 						new Notice(t('port_in_use', this.settings.port));
 						this.stopServer();
@@ -286,7 +292,8 @@ export default class LanEditorPlugin extends Plugin {
 		res.writeHead(404); res.end();
 	}
 
-	async stopServer() {
+    // [Fix 4] Async method has no await -> removed async
+	stopServer() {
 		if (this.server) { this.server.close(); this.server = null; }
 		this.isServerRunning = false;
 	}
@@ -321,7 +328,8 @@ export default class LanEditorPlugin extends Plugin {
 class LanEditorSettingTab extends PluginSettingTab {
 	plugin: LanEditorPlugin;
 	constructor(app: App, plugin: LanEditorPlugin) { super(app, plugin); this.plugin = plugin; }
-	async display() {
+	// [Fix 5] Display should not be async
+	display(): void {
 		const {containerEl} = this; containerEl.empty();
 		
 		const isRunning = this.plugin.isServerRunning;
@@ -329,89 +337,24 @@ class LanEditorSettingTab extends PluginSettingTab {
 		const port = this.plugin.settings.port;
 		const webUrl = `http://${ip}:${port}`;
 
-		const statusCard = containerEl.createDiv({cls: 'status-card'});
-		Object.assign(statusCard.style, {
-			background: 'var(--background-secondary)', padding: '15px', borderRadius: '10px',
-			marginBottom: '20px', border: '1px solid var(--background-modifier-border)',
-			display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'
-		});
+        // [Fix 7] Use CSS classes instead of inline styles
+		const statusCard = containerEl.createDiv({cls: 'airportal-status-card'});
 
-		const statusDot = statusCard.createSpan();
-		Object.assign(statusDot.style, {
-			height: '15px', width: '15px', borderRadius: '50%', display: 'inline-block', marginBottom: '10px',
-			backgroundColor: isRunning ? '#4caf50' : '#ff4d4f', boxShadow: isRunning ? '0 0 8px #4caf50' : 'none'
-		});
+		const statusDot = statusCard.createSpan({cls: 'airportal-status-dot ' + (isRunning ? 'running' : 'stopped')});
 
-		statusCard.createEl('h3', { text: isRunning ? t('status_running') : t('status_stopped'), attr: { style: 'margin:0 0 5px 0;' } });
-		if (isRunning) statusCard.createEl('div', {text: `URL: ${webUrl}`, attr: { style: 'user-select:text; color:var(--text-accent); font-weight:bold;' }});
+        // [Fix 6] Use Setting().setHeading() instead of createEl('h3')
+        new Setting(statusCard)
+            .setName(isRunning ? t('status_running') : t('status_stopped'))
+            .setHeading();
+            
+		if (isRunning) statusCard.createEl('div', {text: `URL: ${webUrl}`, cls: 'airportal-server-url'});
 
-		const toggleBtn = statusCard.createEl('button');
+		const toggleBtn = statusCard.createEl('button', {cls: 'airportal-toggle-btn'});
 		toggleBtn.innerText = isRunning ? t('btn_stop') : t('btn_start');
-		toggleBtn.className = isRunning ? 'mod-warning' : 'mod-cta';
-		toggleBtn.style.marginTop = '15px'; toggleBtn.style.padding = '8px 20px'; toggleBtn.style.cursor = 'pointer';
+		toggleBtn.addClass(isRunning ? 'mod-warning' : 'mod-cta');
 		
 		toggleBtn.onclick = async () => {
 			toggleBtn.innerText = t('btn_processing'); toggleBtn.disabled = true;
-			if (isRunning) await this.plugin.stopServer();
+			if (isRunning) this.plugin.stopServer();
 			else {
-				const success = await this.plugin.startServer();
-				if (!success) toggleBtn.innerText = t('start_failed');
-			}
-			this.display();
-		};
-
-		if (isRunning) {
-			const connectSection = containerEl.createDiv();
-			connectSection.style.marginTop = '20px'; connectSection.style.textAlign = 'center';
-			try {
-				const qrDataUrl = await QRCode.toDataURL(webUrl);
-				const qrImg = connectSection.createEl('img');
-				qrImg.src = qrDataUrl; qrImg.width = 150; qrImg.style.border = '5px solid white'; qrImg.style.borderRadius = '10px';
-			} catch(e) {}
-			connectSection.createEl('p', {text: t('scan_qr'), attr: { style: 'opacity:0.7; font-size:0.9em;' }});
-		}
-
-		containerEl.createEl('hr');
-
-		containerEl.createEl('h3', {text: t('guide_title')});
-		const guide = containerEl.createDiv();
-		guide.style.color = 'var(--text-muted)';
-		guide.style.fontSize = '0.9em';
-		
-		const steps = [
-			'▶ ' + t('guide_1'),
-			'📶 ' + t('guide_2'),
-			'📱 ' + t('guide_3'),
-			'📂 ' + t('guide_4')
-		];
-		steps.forEach(s => guide.createEl('p', {text: s, attr: { style: 'margin-bottom:5px;' }}));
-
-		const warningBox = containerEl.createDiv();
-		Object.assign(warningBox.style, { background: 'rgba(255, 165, 0, 0.1)', border: '1px solid orange', borderRadius: '5px', padding: '10px', fontSize: '0.9em', marginTop: '15px' });
-		warningBox.createEl('strong', {text: t('risk_warning')});
-		warningBox.createEl('span', {text: ' ' + t('risk_desc')});
-		warningBox.createEl('strong', {text: t('risk_desc_strong'), attr: { style: 'color:red' }});
-		warningBox.createEl('span', {text: '。'});
-		
-		const disclaimer = containerEl.createDiv();
-		disclaimer.style.fontSize = '0.85em'; disclaimer.style.opacity = '0.7'; disclaimer.style.marginTop = '5px';
-		disclaimer.createEl('p', {text: t('risk_footer')});
-
-		containerEl.createEl('hr');
-
-		containerEl.createEl('h3', {text: '⚙️ Settings'});
-		new Setting(containerEl).setName(t('setting_port')).setDesc(t('setting_port_desc')).addText(text => text.setValue(String(this.plugin.settings.port)).onChange(async v => { this.plugin.settings.port = Number(v); await this.plugin.saveSettings(); }))
-			.addButton(btn => btn.setButtonText(t('btn_save_restart')).setCta().onClick(async () => { await this.plugin.stopServer(); await this.plugin.startServer(); this.display(); }));
-
-		new Setting(containerEl).setName(t('setting_ip')).setDesc(t('setting_ip_desc')).addText(text => text.setValue(this.plugin.settings.manualIP).onChange(async v => { this.plugin.settings.manualIP = v; await this.plugin.saveSettings(); }))
-			.addButton(btn => btn.setButtonText(t('btn_update_ip')).onClick(() => { this.display(); }));
-
-		containerEl.createEl('hr');
-		const authorSection = containerEl.createDiv();
-		authorSection.style.textAlign = 'center'; authorSection.style.marginTop = '30px'; authorSection.style.opacity = '0.7';
-		authorSection.createEl('span', {text: t('author') + ' '});
-		const link = authorSection.createEl('a', {text: t('github'), href: 'https://github.com/zyshunyx-lang/obsidian-air-portal'}); 
-		link.style.color = 'var(--text-accent)';
-        authorSection.createEl('p', {text: '如果觉得好用，请给个 Star ⭐', attr: { style: 'font-size:0.8em; margin-top:5px;' }});
-	}
-}
+				const success = await this.plugin.startServer

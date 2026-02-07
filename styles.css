@@ -1,3 +1,111 @@
 /* AirPortal Plugin Styles */
-/* Currently, the plugin uses inline styles for the web interface. */
-/* This file is reserved for future Obsidian UI customizations. */
+
+/* 状态卡片 */
+.airportal-status-card {
+    background-color: var(--background-secondary);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid var(--background-modifier-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* 状态指示灯 */
+.airportal-status-dot {
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+.airportal-status-dot.running {
+    background-color: #4caf50;
+    box-shadow: 0 0 8px #4caf50;
+}
+.airportal-status-dot.stopped {
+    background-color: #ff4d4f;
+    box-shadow: none;
+}
+
+/* 状态标题 */
+.airportal-status-title {
+    margin: 0 0 5px 0;
+}
+
+/* 服务器地址 */
+.airportal-server-url {
+    user-select: text;
+    color: var(--text-accent);
+    font-weight: bold;
+}
+
+/* 开关按钮 */
+.airportal-toggle-btn {
+    margin-top: 15px;
+    padding: 8px 20px;
+    cursor: pointer;
+}
+
+/* 连接区域 */
+.airportal-connect-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* 二维码图片 */
+.airportal-qr-img {
+    border: 5px solid white;
+    border-radius: 10px;
+}
+
+/* 扫码提示文字 */
+.airportal-scan-hint {
+    opacity: 0.7;
+    font-size: 0.9em;
+}
+
+/* 使用指南文本 */
+.airportal-guide-text {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+.airportal-guide-step {
+    margin-bottom: 5px;
+}
+
+/* 警告框 */
+.airportal-warning-box {
+    background-color: rgba(255, 165, 0, 0.1);
+    border: 1px solid orange;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 0.9em;
+    margin-top: 15px;
+}
+.airportal-risk-strong {
+    color: var(--text-error);
+}
+
+/* 免责声明 */
+.airportal-disclaimer {
+    font-size: 0.85em;
+    opacity: 0.7;
+    margin-top: 5px;
+}
+
+/* 作者信息 */
+.airportal-author-section {
+    text-align: center;
+    margin-top: 30px;
+    opacity: 0.7;
+}
+.airportal-github-link {
+    color: var(--text-accent);
+}
+.airportal-star-text {
+    font-size: 0.8em;
+    margin-top: 5px;
+}
