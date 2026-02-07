@@ -250,8 +250,13 @@ export default class LanEditorPlugin extends Plugin {
 					const { filename, content } = JSON.parse(body);
 					const safeName = filename.replace(/\.\./g, ''); 
 					let file = this.app.vault.getAbstractFileByPath(safeName);
-					if (file instanceof TFile) await this.app.vault.modify(file, content);
-					else await this.app.vault.create(safeName, content);
+					if (file instanceof TFile) {
+						// 【v2升级】先移入回收站，防止误覆盖
+						await this.app.vault.trash(file, false);
+						await this.app.vault.create(safeName, content);
+					} else {
+						await this.app.vault.create(safeName, content);
+					}
 					res.writeHead(200); res.end('Saved');
 				} catch (e) { res.writeHead(500); res.end('Error'); }
 			});

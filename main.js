@@ -2339,8 +2339,12 @@ var LanEditorPlugin = class extends import_obsidian.Plugin {
           const { filename, content } = JSON.parse(body);
           const safeName = filename.replace(/\.\./g, "");
           let file = this.app.vault.getAbstractFileByPath(safeName);
-          if (file instanceof import_obsidian.TFile) await this.app.vault.modify(file, content);
-          else await this.app.vault.create(safeName, content);
+          if (file instanceof import_obsidian.TFile) {
+            await this.app.vault.trash(file, false);
+            await this.app.vault.create(safeName, content);
+          } else {
+            await this.app.vault.create(safeName, content);
+          }
           res.writeHead(200);
           res.end("Saved");
         } catch (e) {
