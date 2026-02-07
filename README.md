@@ -32,6 +32,14 @@
 
 ---
 
+## 📸 Screenshots (截图)
+
+| Mobile Interface (手机端) | Settings (设置界面) |
+| :---: | :---: |
+| ![Mobile UI](images/demo-mobile.png) | ![Settings](images/demo-settings.png) |
+
+*(Run the plugin to see the QR code and start using!)*
+
 ## 🛠️ Installation (安装方法)
 
 ### Method 1: Community Plugins (Recommended)
