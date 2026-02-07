@@ -3,7 +3,7 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/zyshunyx-lang/obsidian-air-portal)
 ![GitHub downloads](https://img.shields.io/github/downloads/zyshunyx-lang/obsidian-air-portal/total)
 
-**AirPortal** transforms your Obsidian into a local web server, allowing you to **view, edit, and transfer** your notes from any device (iOS, Android, iPad, PC) via a web browser.
+**AirPortal** transforms your vault into a local web server, allowing you to **view, edit, and transfer** your notes from any device (iOS, Android, iPad, PC) via a web browser.
 
 **No companion app required.** Just scan the QR code and start managing your notes wirelessly.
 

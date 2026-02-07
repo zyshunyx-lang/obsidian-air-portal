@@ -3,8 +3,8 @@
 	"name": "AirPortal",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Turn your Obsidian into a local web server. Transfer, edit, and manage notes wirelessly via browser. (无线传送门)",
+	"description": "Turn your vault into a local web server. Transfer, edit, and manage notes wirelessly via browser. (无线传送门)",
 	"author": "zyshunyx",
-	"authorUrl": "https://github.com/zyshunyx-lang/obsidian-air-portal",
+	"authorUrl": "https://github.com/zyshunyx",
 	"isDesktopOnly": true
 }
