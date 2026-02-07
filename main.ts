@@ -36,7 +36,7 @@ const TR = {
         risk_desc_strong: '直接覆盖且无法撤销',
         risk_footer: '免责声明：本插件仅在局域网工作。作者不对因覆盖操作导致的数据丢失负责。请定期备份。',
         
-        // [Fix 9] Sentence case for UI text (Optional adjustment in translation keys)
+        // [Fix 9] Sentence case for UI text
         setting_port: '服务端口 (Server port)',
         setting_port_desc: '默认为 27123。',
         btn_save_restart: '保存并重启',
@@ -355,6 +355,68 @@ class LanEditorSettingTab extends PluginSettingTab {
 		
 		toggleBtn.onclick = async () => {
 			toggleBtn.innerText = t('btn_processing'); toggleBtn.disabled = true;
-			if (isRunning) this.plugin.stopServer();
-			else {
-				const success = await this.plugin.startServer
+			if (isRunning) {
+                this.plugin.stopServer();
+            } else {
+				const success = await this.plugin.startServer();
+				if (!success) toggleBtn.innerText = t('start_failed');
+			}
+			this.display();
+		};
+
+		if (isRunning) {
+			const connectSection = containerEl.createDiv({cls: 'airportal-connect-section'});
+            // Async operation inside a UI block needs careful handling, here we use .then to avoid async display()
+            QRCode.toDataURL(webUrl).then((qrDataUrl: string) => {
+				const qrImg = connectSection.createEl('img', {cls: 'airportal-qr-img'});
+				qrImg.src = qrDataUrl; 
+                qrImg.width = 150;
+			}).catch(() => {
+                // [Fix 8 & 10] Empty block / unused 'e' -> ignore or log
+            });
+            
+			connectSection.createEl('p', {text: t('scan_qr'), cls: 'airportal-scan-hint'});
+		}
+
+		containerEl.createEl('hr');
+
+        // [Fix 6] Heading
+        new Setting(containerEl).setName(t('guide_title')).setHeading();
+
+		const guide = containerEl.createDiv({cls: 'airportal-guide-text'});
+		
+		const steps = [
+			'▶ ' + t('guide_1'),
+			'📶 ' + t('guide_2'),
+			'📱 ' + t('guide_3'),
+			'📂 ' + t('guide_4')
+		];
+		steps.forEach(s => guide.createEl('p', {text: s, cls: 'airportal-guide-step'}));
+
+		const warningBox = containerEl.createDiv({cls: 'airportal-warning-box'});
+		warningBox.createEl('strong', {text: t('risk_warning')});
+		warningBox.createEl('span', {text: ' ' + t('risk_desc')});
+		warningBox.createEl('strong', {text: t('risk_desc_strong'), cls: 'airportal-risk-strong'});
+		warningBox.createEl('span', {text: '。'});
+		
+		const disclaimer = containerEl.createDiv({cls: 'airportal-disclaimer'});
+		disclaimer.createEl('p', {text: t('risk_footer')});
+
+		containerEl.createEl('hr');
+
+        // [Fix 6] Heading
+        new Setting(containerEl).setName('⚙️ Settings').setHeading();
+
+		new Setting(containerEl).setName(t('setting_port')).setDesc(t('setting_port_desc')).addText(text => text.setValue(String(this.plugin.settings.port)).onChange(async v => { this.plugin.settings.port = Number(v); await this.plugin.saveSettings(); }))
+			.addButton(btn => btn.setButtonText(t('btn_save_restart')).setCta().onClick(async () => { this.plugin.stopServer(); await this.plugin.startServer(); this.display(); }));
+
+		new Setting(containerEl).setName(t('setting_ip')).setDesc(t('setting_ip_desc')).addText(text => text.setValue(this.plugin.settings.manualIP).onChange(async v => { this.plugin.settings.manualIP = v; await this.plugin.saveSettings(); }))
+			.addButton(btn => btn.setButtonText(t('btn_update_ip')).onClick(() => { this.display(); }));
+
+		containerEl.createEl('hr');
+		const authorSection = containerEl.createDiv({cls: 'airportal-author-section'});
+		authorSection.createEl('span', {text: t('author') + ' '});
+		const link = authorSection.createEl('a', {text: t('github'), href: 'https://github.com/zyshunyx-lang/obsidian-air-portal', cls: 'airportal-github-link'}); 
+        authorSection.createEl('p', {text: '如果觉得好用，请给个 Star ⭐', cls: 'airportal-star-text'});
+	}
+}
