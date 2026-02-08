@@ -2125,6 +2125,7 @@ var os = __toESM(require("os"));
 var fs = __toESM(require("fs"));
 var path = __toESM(require("path"));
 var QRCode = __toESM(require_browser());
+var { clipboard } = require("electron");
 var TR = {
   zh: {
     plugin_name: "AirPortal \u65E0\u7EBF\u4F20\u9001\u95E8",
@@ -2151,9 +2152,10 @@ var TR = {
     risk_desc: "\u4E0A\u4F20\u540C\u540D\u6587\u4EF6\u5C06",
     risk_desc_strong: "\u76F4\u63A5\u8986\u76D6\u4E14\u65E0\u6CD5\u64A4\u9500",
     risk_footer: "\u514D\u8D23\u58F0\u660E\uFF1A\u672C\u63D2\u4EF6\u4EC5\u5728\u5C40\u57DF\u7F51\u5DE5\u4F5C\u3002\u4F5C\u8005\u4E0D\u5BF9\u56E0\u8986\u76D6\u64CD\u4F5C\u5BFC\u81F4\u7684\u6570\u636E\u4E22\u5931\u8D1F\u8D23\u3002\u8BF7\u5B9A\u671F\u5907\u4EFD\u3002",
-    // [Fix 9] Sentence case for UI text
     setting_port: "\u670D\u52A1\u7AEF\u53E3 (Server port)",
     setting_port_desc: "\u9ED8\u8BA4\u4E3A 27123\u3002",
+    setting_upload_folder: "\u4ECE\u624B\u673A\u4E0A\u4F20\u7684\u6587\u4EF6\u5939 (Upload Folder)",
+    setting_upload_folder_desc: "\u4E0A\u4F20\u6587\u4EF6\u7684\u4FDD\u5B58\u4F4D\u7F6E\u3002\u9ED8\u8BA4\u5B58\u653E\u5728 AirPortal \u6587\u4EF6\u5939\u3002",
     btn_save_restart: "\u4FDD\u5B58\u5E76\u91CD\u542F",
     setting_ip: "\u624B\u52A8\u6307\u5B9A IP (Manual IP)",
     setting_ip_desc: "\u5982\u679C\u81EA\u52A8\u8BC6\u522B\u5931\u8D25\uFF0C\u8BF7\u624B\u52A8\u586B\u5165\u3002",
@@ -2165,6 +2167,15 @@ var TR = {
     web_import: "\u5BFC\u5165\u6587\u4EF6",
     web_new: "\u65B0\u5EFA\u7B14\u8BB0",
     web_search: "\u641C\u7D22\u7B14\u8BB0...",
+    // [v2 Feature] Clipboard i18n
+    web_clipboard_title: "\u526A\u5207\u677F\u5386\u53F2",
+    web_clipboard_placeholder: "\u53D1\u9001\u6587\u5B57\u5230\u7535\u8111...",
+    web_clipboard_btn: "\u53D1\u9001",
+    web_clipboard_pull: "\u4ECE\u7535\u8111\u83B7\u53D6",
+    web_clipboard_copy_toast: "\u5DF2\u590D\u5236\u5230\u624B\u673A",
+    web_clipboard_archive_toast: "\u2705 \u5DF2\u5F52\u6863\u5230 Clipboard.md",
+    web_clipboard_expand: "\u5C55\u5F00\u66F4\u591A",
+    web_clipboard_collapse: "\u6536\u8D77",
     web_empty: "\u7535\u8111\u4E0A\u6CA1\u6709\u7B14\u8BB0",
     web_download: "\u4E0B\u8F7D",
     web_save: "\u4FDD\u5B58",
@@ -2173,8 +2184,16 @@ var TR = {
     web_toast_success: "\u2705 \u5BFC\u5165\u6210\u529F",
     web_toast_saved: "\u2705 \u5DF2\u4FDD\u5B58\u5230\u7535\u8111",
     web_toast_failed: "\u274C \u5931\u8D25",
+    web_toast_deleted: "\u{1F5D1}\uFE0F \u5DF2\u5220\u9664",
+    web_toast_clipboard: "\u{1F4CB} \u5DF2\u53D1\u9001\u5230\u7535\u8111",
     web_connecting: "\u6B63\u5728\u8FDE\u63A5 AirPortal...",
-    web_disconnect: "\u8FDE\u63A5\u65AD\u5F00"
+    web_disconnect: "\u8FDE\u63A5\u65AD\u5F00",
+    rename: "\u91CD\u547D\u540D/\u79FB\u52A8",
+    delete: "\u5220\u9664",
+    copy: "\u590D\u5236",
+    edit: "\u7F16\u8F91",
+    confirmDelete: "\u786E\u8BA4\u5220\u9664\uFF1F",
+    parentFolder: ".. (\u4E0A\u7EA7\u6587\u4EF6\u5939)"
   },
   en: {
     plugin_name: "AirPortal",
@@ -2206,6 +2225,8 @@ var TR = {
     btn_save_restart: "Save & restart",
     setting_ip: "Manual IP",
     setting_ip_desc: "Enter manually if auto-detection fails.",
+    setting_upload_folder: "Upload Folder",
+    setting_upload_folder_desc: 'Folder to store uploaded files. Default: Can set to "AirPortal"',
     btn_update_ip: "Update view",
     author: "Developed by: Obsidian Fan",
     github: "GitHub / Issues",
@@ -2214,6 +2235,15 @@ var TR = {
     web_import: "Import",
     web_new: "New Note",
     web_search: "Search notes...",
+    // [v2 Feature] Clipboard i18n
+    web_clipboard_title: "Clipboard History",
+    web_clipboard_placeholder: "Send text to PC...",
+    web_clipboard_btn: "Send",
+    web_clipboard_pull: "Pull from PC",
+    web_clipboard_copy_toast: "Copied to Phone",
+    web_clipboard_archive_toast: "\u2705 Archived to Clipboard.md",
+    web_clipboard_expand: "Show More",
+    web_clipboard_collapse: "Collapse",
     web_empty: "No notes found",
     web_download: "Download",
     web_save: "Save",
@@ -2222,8 +2252,16 @@ var TR = {
     web_toast_success: "\u2705 Import Success",
     web_toast_saved: "\u2705 Saved to PC",
     web_toast_failed: "\u274C Failed",
+    web_toast_deleted: "\u{1F5D1}\uFE0F Deleted",
+    web_toast_clipboard: "\u{1F4CB} Sent to PC",
     web_connecting: "Connecting to AirPortal...",
-    web_disconnect: "Disconnected"
+    web_disconnect: "Disconnected",
+    rename: "Rename/Move",
+    delete: "Delete",
+    copy: "Duplicate",
+    edit: "Edit",
+    confirmDelete: "Confirm Delete?",
+    parentFolder: ".. (Parent Folder)"
   }
 };
 function t(key, ...args) {
@@ -2237,7 +2275,7 @@ function t(key, ...args) {
   return text;
 }
 (0, import_obsidian.addIcon)("airportal-icon", `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`);
-var DEFAULT_SETTINGS = { port: 27123, manualIP: "" };
+var DEFAULT_SETTINGS = { port: 27123, manualIP: "", clipboardHistory: [], uploadFolder: "AirPortal" };
 var LanEditorPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
@@ -2306,13 +2344,17 @@ var LanEditorPlugin = class extends import_obsidian.Plugin {
       return;
     }
     if (pathname === "/api/list") {
-      const files = this.app.vault.getMarkdownFiles().map((f) => f.path);
+      const files = this.app.vault.getAllLoadedFiles().map((f) => ({
+        name: f.name,
+        path: f.path,
+        isDir: f instanceof import_obsidian.TFile ? false : true,
+        mtime: f instanceof import_obsidian.TFile ? f.stat.mtime : 0,
+        parent: f.parent ? f.parent.path : ""
+      }));
       files.sort((a, b) => {
-        const fa = this.app.vault.getAbstractFileByPath(a);
-        const fb = this.app.vault.getAbstractFileByPath(b);
-        const ta = fa instanceof import_obsidian.TFile ? fa.stat.mtime : 0;
-        const tb = fb instanceof import_obsidian.TFile ? fb.stat.mtime : 0;
-        return tb - ta;
+        if (a.isDir && !b.isDir) return -1;
+        if (!a.isDir && b.isDir) return 1;
+        return b.mtime - a.mtime;
       });
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(files));
@@ -2322,9 +2364,26 @@ var LanEditorPlugin = class extends import_obsidian.Plugin {
       const filename = url.searchParams.get("file");
       const file = this.app.vault.getAbstractFileByPath(filename || "");
       if (file instanceof import_obsidian.TFile) {
-        const content = await this.app.vault.read(file);
-        res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end(content);
+        const ext = file.extension.toLowerCase();
+        const mimeMap = {
+          "png": "image/png",
+          "jpg": "image/jpeg",
+          "jpeg": "image/jpeg",
+          "gif": "image/gif",
+          "webp": "image/webp",
+          "svg": "image/svg+xml",
+          "pdf": "application/pdf"
+        };
+        const mime = mimeMap[ext];
+        if (mime) {
+          const content = await this.app.vault.readBinary(file);
+          res.writeHead(200, { "Content-Type": mime });
+          res.end(Buffer.from(content));
+        } else {
+          const content = await this.app.vault.read(file);
+          res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+          res.end(content);
+        }
       } else {
         res.writeHead(404);
         res.end();
@@ -2354,17 +2413,179 @@ var LanEditorPlugin = class extends import_obsidian.Plugin {
       });
       return;
     }
+    if (pathname === "/api/clipboard") {
+      if (req.method === "POST") {
+        let body = "";
+        req.on("data", (chunk) => body += chunk);
+        req.on("end", async () => {
+          try {
+            const { text, action } = JSON.parse(body);
+            if (action === "delete") {
+              const currentText = clipboard.readText();
+              if (currentText === text) {
+                clipboard.writeText("");
+              }
+              this.settings.clipboardHistory = this.settings.clipboardHistory.filter((t2) => t2 !== text);
+              await this.saveSettings();
+              res.writeHead(200);
+              res.end("Deleted");
+              return;
+            }
+            if (text) {
+              await navigator.clipboard.writeText(text);
+              await this.addToHistory(text);
+              new import_obsidian.Notice("\u{1F4CB} AirPortal: " + text.substring(0, 20) + (text.length > 20 ? "..." : ""));
+              res.writeHead(200);
+              res.end("OK");
+            } else {
+              res.writeHead(200);
+              res.end("Empty");
+            }
+          } catch (e) {
+            res.writeHead(400);
+            res.end("Invalid JSON");
+          }
+        });
+        return;
+      }
+      if (req.method === "GET") {
+        try {
+          const text = clipboard.readText();
+          if (text) await this.addToHistory(text);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            current: text,
+            history: this.settings.clipboardHistory
+          }));
+        } catch (e) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            current: "",
+            history: this.settings.clipboardHistory
+          }));
+        }
+        return;
+      }
+    }
+    if (pathname === "/api/clipboard/archive" && req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => body += chunk);
+      req.on("end", async () => {
+        try {
+          const { text } = JSON.parse(body);
+          const targetFile = "Clipboard.md";
+          const timestamp = window.moment().format("YYYY-MM-DD HH:mm");
+          const appendContent = `- [${timestamp}] ${text}
+`;
+          let file = this.app.vault.getAbstractFileByPath(targetFile);
+          if (!file) {
+            await this.app.vault.create(targetFile, `# \u{1F4CB} \u526A\u5207\u677F\u5F52\u6863 (Clipboard Archive)
+
+${appendContent}`);
+          } else if (file instanceof import_obsidian.TFile) {
+            await this.app.vault.process(file, (data) => data + appendContent);
+          }
+          new import_obsidian.Notice(`\u{1F4BE} \u5DF2\u5F52\u6863\u5230 ${targetFile}`);
+          res.writeHead(200);
+          res.end("Archived");
+        } catch (e) {
+          res.writeHead(500);
+          res.end("Error");
+        }
+      });
+      return;
+    }
     if (pathname === "/api/upload" && req.method === "POST") {
       const rawName = url.searchParams.get("name") || "uploaded.md";
+      const rawFolder = url.searchParams.get("folder");
       const fileName = decodeURIComponent(rawName);
+      const folderParam = rawFolder ? decodeURIComponent(rawFolder) : "";
       const safeName = path.basename(fileName);
-      const filePath = path.join(vaultPath, safeName);
-      const writeStream = fs.createWriteStream(filePath);
+      const folderName = folderParam || this.settings.uploadFolder || "";
+      const relativePath = folderName ? path.join(folderName, safeName) : safeName;
+      const fullPath = path.join(vaultPath, relativePath);
+      const uploadDir = path.dirname(fullPath);
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const writeStream = fs.createWriteStream(fullPath);
       req.pipe(writeStream);
       req.on("end", () => {
         res.writeHead(200);
         res.end("OK");
-        setTimeout(() => this.app.vault.adapter.reconcileFileCreation(safeName), 500);
+        setTimeout(() => this.app.vault.adapter.reconcileFileCreation(relativePath.replace(/\\/g, "/")), 500);
+      });
+      return;
+    }
+    if (pathname === "/api/rename" && req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => body += chunk);
+      req.on("end", async () => {
+        try {
+          const { oldPath, newName } = JSON.parse(body);
+          const file = this.app.vault.getAbstractFileByPath(oldPath);
+          if (file instanceof import_obsidian.TFile && file.parent) {
+            let parent = file.parent.path;
+            if (parent === "/") parent = "";
+            const targetPath = parent ? `${parent}/${newName}` : newName;
+            await this.app.fileManager.renameFile(file, targetPath);
+            res.writeHead(200);
+            res.end("Renamed");
+          } else {
+            res.writeHead(404);
+            res.end("File not found");
+          }
+        } catch (e) {
+          res.writeHead(500);
+          res.end("Error: " + String(e));
+        }
+      });
+      return;
+    }
+    if (pathname === "/api/copy" && req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => body += chunk);
+      req.on("end", async () => {
+        try {
+          const { oldPath, newName } = JSON.parse(body);
+          const file = this.app.vault.getAbstractFileByPath(oldPath);
+          if (file instanceof import_obsidian.TFile && file.parent) {
+            let parent = file.parent.path;
+            if (parent === "/") parent = "";
+            const targetPath = parent ? `${parent}/${newName}` : newName;
+            await this.app.vault.copy(file, targetPath);
+            res.writeHead(200);
+            res.end("Copied");
+          } else {
+            res.writeHead(404);
+            res.end("File not found");
+          }
+        } catch (e) {
+          res.writeHead(500);
+          res.end("Error: " + String(e));
+        }
+      });
+      return;
+    }
+    if (pathname === "/api/delete" && req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => body += chunk);
+      req.on("end", async () => {
+        try {
+          const { path: filePath } = JSON.parse(body);
+          const file = this.app.vault.getAbstractFileByPath(filePath);
+          if (file instanceof import_obsidian.TFile) {
+            await this.app.vault.trash(file, true);
+            res.writeHead(200);
+            res.end("Deleted");
+          } else {
+            res.writeHead(404);
+            res.end("File not found");
+          }
+        } catch (e) {
+          res.writeHead(500);
+          res.end("Error");
+        }
       });
       return;
     }
@@ -2390,7 +2611,16 @@ var LanEditorPlugin = class extends import_obsidian.Plugin {
     res.writeHead(404);
     res.end();
   }
-  // [Fix 4] Async method has no await -> removed async
+  // Helper: Add text to clipboard history
+  async addToHistory(text) {
+    if (!text || !text.trim()) return;
+    this.settings.clipboardHistory = this.settings.clipboardHistory.filter((t2) => t2 !== text);
+    this.settings.clipboardHistory.unshift(text);
+    if (this.settings.clipboardHistory.length > 20) {
+      this.settings.clipboardHistory.pop();
+    }
+    await this.saveSettings();
+  }
   stopServer() {
     if (this.server) {
       this.server.close();
@@ -2419,11 +2649,428 @@ var LanEditorPlugin = class extends import_obsidian.Plugin {
 				success: "${t("web_toast_success")}",
 				saved: "${t("web_toast_saved")}",
 				failed: "${t("web_toast_failed")}",
+                deleted: "${t("web_toast_deleted")}",
+				clipboard: "${t("web_toast_clipboard")}",
+				copyToast: "${t("web_clipboard_copy_toast")}",
+                archiveToast: "${t("web_clipboard_archive_toast")}",
+                expand: "${t("web_clipboard_expand")}",
+                collapse: "${t("web_clipboard_collapse")}",
+                rename: "${t("rename")}",
+                delete: "${t("delete")}",
+                copy: "${t("copy")}",
+                edit: "${t("edit")}",
+                confirmDelete: "${t("confirmDelete")}",
+                parentFolder: "${t("parentFolder")}",
 				connecting: "${t("web_connecting")}",
 				disconnect: "${t("web_disconnect")}"
 			};
 		`;
-    return `<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>${t("web_title")}</title><style>:root{--bg:#f5f5f7;--card:#ffffff;--text:#1d1d1f;--subtext:#86868b;--border:#d2d2d7;--accent:#007aff;--header-bg:rgba(255,255,255,0.8)}body.dark-mode{--bg:#000000;--card:#1c1c1e;--text:#f5f5f7;--subtext:#86868b;--border:#38383a;--accent:#0a84ff;--header-bg:rgba(28,28,30,0.8)}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);margin:0;display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:background .3s}header{background:var(--header-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);z-index:10}h1{margin:0;font-size:16px;font-weight:600}.btn{background:0 0;border:none;color:var(--accent);font-size:15px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:6px;transition:.2s}.btn:active{background:rgba(0,0,0,.05);transform:scale(.96)}body.dark-mode .btn:active{background:rgba(255,255,255,.1)}.btn-icon{font-size:18px;padding:4px 8px}.search-box{padding:10px 16px;background:var(--bg);position:sticky;top:0}input[type=text]{width:100%;padding:8px 12px;border-radius:10px;border:none;background:rgba(118,118,128,.12);color:var(--text);font-size:16px;box-sizing:border-box;outline:none;text-align:center;transition:.2s}input[type=text]:focus{text-align:left;background:var(--card);box-shadow:0 0 0 1px var(--accent)}#file-list{flex:1;overflow-y:auto;padding:0 16px 20px 16px;list-style:none;margin:0}.file-item{background:var(--card);padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;cursor:pointer}.file-item:first-child{border-top-left-radius:12px;border-top-right-radius:12px}.file-item:last-child{border-bottom-left-radius:12px;border-bottom-right-radius:12px;border-bottom:none}.file-name{flex:1;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.file-arrow{color:var(--subtext);font-size:18px;margin-left:10px;opacity:.5}#editor{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:20;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}#editor.open{transform:translateX(0)}.editor-toolbar{background:var(--header-bg);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;justify-content:space-between;align-items:center}.editor-btn-group{display:flex;gap:10px}.btn-save{background:#34c759;color:#fff;padding:6px 14px;border-radius:16px;font-weight:600}.btn-down{background:#007aff;color:#fff;padding:6px 14px;border-radius:16px;font-weight:600}textarea{flex:1;padding:20px;font-size:17px;line-height:1.6;border:none;background:var(--bg);color:var(--text);resize:none;outline:none;font-family:-apple-system,monospace}#upload-input{display:none}.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(50,50,50,.9);color:#fff;padding:16px 24px;border-radius:14px;font-size:16px;font-weight:600;opacity:0;pointer-events:none;transition:all .2s;z-index:100;backdrop-filter:blur(10px)}.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}</style></head><body><input type="file" id="upload-input" multiple><header><div style="display:flex;gap:5px"><button class="btn" onclick="triggerUpload()">${t("web_import")}</button><button class="btn btn-icon" onclick="refreshList()" title="Refresh">\u21BB</button></div><h1 id="page-title">${t("web_title")}</h1><div style="display:flex;gap:5px"><button class="btn btn-icon" onclick="toggleTheme()" title="Theme">\u25D1</button><button class="btn" onclick="openEditor('','')">${t("web_new")}</button></div></header><div class="search-box"><input type="text" id="search" placeholder="${t("web_search")}" oninput="filterFiles()"></div><ul id="file-list"></ul><div id="editor"><div class="editor-toolbar"><button class="btn" onclick="closeEditor()">${t("web_close")}</button><span style="font-weight:600;font-size:15px;max-width:120px;overflow:hidden;white-space:nowrap" id="current-filename">${t("web_new")}</span><div class="editor-btn-group"><button class="btn btn-down" onclick="downloadFile()">${t("web_download")}</button><button class="btn btn-save" onclick="saveFile()">${t("web_save")}</button></div></div><input type="text" id="filename-input" placeholder="Filename" style="margin:10px 16px;padding:12px;border-radius:10px;border:none;background:rgba(128,128,128,.1);color:var(--text);font-size:16px;display:none;outline:none"><textarea id="file-content"></textarea></div><div class="toast" id="toast"></div><script>${i18nScript} let allFiles=[],currentFile="";"dark"===localStorage.getItem("theme")&&document.body.classList.add("dark-mode"),refreshList();function toggleTheme(){document.body.classList.toggle("dark-mode");const e=document.body.classList.contains("dark-mode");localStorage.setItem("theme",e?"dark":"light")}function refreshList(){const e=document.getElementById("file-list");e.innerHTML='<li style="text-align:center; padding:20px; color:var(--subtext);">'+I18N.connecting+'</li>',fetch("/api/list").then(e=>e.json()).then(t=>{allFiles=t,renderFiles(t)}).catch(()=>{e.innerHTML='<li style="text-align:center; padding:20px; color:red;">'+I18N.disconnect+'</li>'})}function renderFiles(e){const t=document.getElementById("file-list");if(t.innerHTML="",0===e.length){t.innerHTML='<li style="text-align:center; padding:40px; color:var(--subtext);">'+I18N.empty+'</li>';return}const n=document.createElement("div");n.style.marginTop="10px";e.slice(0,100).forEach(e=>{const t=document.createElement("div");t.className="file-item",t.onclick=()=>loadFile(e),t.innerHTML=\`<span class="file-name">\${e}</span><span class="file-arrow">\u203A</span>\`,n.appendChild(t)}),t.appendChild(n)}function filterFiles(){const e=document.getElementById("search").value.toLowerCase();renderFiles(allFiles.filter(t=>t.toLowerCase().includes(e)))}function triggerUpload(){document.getElementById("upload-input").click()}async function loadFile(e){currentFile=e,document.getElementById("current-filename").innerText=e,document.getElementById("filename-input").style.display="none";const t=await fetch("/api/get?file="+encodeURIComponent(e));document.getElementById("file-content").value=await t.text(),document.getElementById("editor").classList.add("open")}function openEditor(){currentFile="",document.getElementById("current-filename").innerText=I18N.new,document.getElementById("filename-input").style.display="block",document.getElementById("filename-input").value="",document.getElementById("file-content").value="",document.getElementById("editor").classList.add("open"),setTimeout(()=>document.getElementById("filename-input").focus(),300)}function closeEditor(){document.getElementById("editor").classList.remove("open"),document.getElementById("filename-input").blur(),document.getElementById("file-content").blur()}async function saveFile(){let e=currentFile;const t=document.getElementById("file-content").value;if(!e&&(e=document.getElementById("filename-input").value,!e))return alert(I18N.error);e.endsWith(".md")||(e+=".md");const n=await fetch("/api/save",{method:"POST",body:JSON.stringify({filename:e,content:t})});n.ok?(showToast(I18N.saved),currentFile||(currentFile=e,refreshList(),closeEditor())):showToast(I18N.failed)}function downloadFile(){if(!currentFile)return;const e=document.createElement("a");e.href="/api/download?file="+encodeURIComponent(currentFile),e.download=currentFile,document.body.appendChild(e),e.click(),document.body.removeChild(e)}function showToast(e){const t=document.getElementById("toast");t.innerText=e,t.classList.add("show"),setTimeout(()=>t.classList.remove("show"),2e3)}document.getElementById("upload-input").onchange=async e=>{const t=e.target.files;if(!t.length)return;showToast(I18N.uploading);for(const e of t)await fetch("/api/upload?name="+encodeURIComponent(e.name),{method:"POST",body:e});showToast(I18N.success),refreshList(),e.target.value=""};<\/script></body></html>`;
+    return `<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"><title>${t("web_title")}</title><style>:root{--bg:#f5f5f7;--card:#ffffff;--text:#1d1d1f;--subtext:#86868b;--border:#d2d2d7;--accent:#007aff;--danger:#ff3b30;--header-bg:rgba(255,255,255,0.8)}body.dark-mode{--bg:#000000;--card:#1c1c1e;--text:#f5f5f7;--subtext:#86868b;--border:#38383a;--accent:#0a84ff;--danger:#ff453a;--header-bg:rgba(28,28,30,0.8)}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);margin:0;display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:background .3s}header{background:var(--header-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:10px 16px;padding-top:max(10px, env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);z-index:10}h1{margin:0;font-size:16px;font-weight:600}.btn{background:0 0;border:none;color:var(--accent);font-size:15px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:6px;transition:.2s}.btn:active{background:rgba(0,0,0,.05);transform:scale(.96)}body.dark-mode .btn:active{background:rgba(255,255,255,.1)}.btn-icon{font-size:18px;padding:4px 8px}.search-box{padding:10px 16px;background:var(--bg);position:sticky;top:0;display:flex;flex-direction:column;gap:8px;z-index:5;}input[type=text]{width:100%;padding:8px 12px;border-radius:10px;border:none;background:rgba(118,118,128,.12);color:var(--text);font-size:16px;box-sizing:border-box;outline:none;text-align:center;transition:.2s}input[type=text]:focus{text-align:left;background:var(--card);box-shadow:0 0 0 1px var(--accent)}#file-list{flex:1;overflow-y:auto;padding:0 16px 20px 16px;list-style:none;margin:0}.file-item{background:var(--card);padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;cursor:pointer}.file-item:first-child{border-top-left-radius:12px;border-top-right-radius:12px}.file-item:last-child{border-bottom-left-radius:12px;border-bottom-right-radius:12px;border-bottom:none}.file-name{flex:1;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.file-arrow{color:var(--subtext);font-size:18px;margin-left:10px;opacity:.5}#editor{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:20;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}#editor.open{transform:translateX(0)}.editor-toolbar{background:var(--header-bg);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;justify-content:space-between;align-items:center}.editor-btn-group{display:flex;gap:10px}.btn-save{background:#34c759;color:#fff;padding:6px 14px;border-radius:16px;font-weight:600}.btn-down{background:#007aff;color:#fff;padding:6px 14px;border-radius:16px;font-weight:600}textarea{flex:1;padding:20px;font-size:17px;line-height:1.6;border:none;background:var(--bg);color:var(--text);resize:none;outline:none;font-family:-apple-system,monospace}#upload-input{display:none}.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(50,50,50,.9);color:#fff;padding:16px 24px;border-radius:14px;font-size:16px;font-weight:600;opacity:0;pointer-events:none;transition:all .2s;z-index:100;backdrop-filter:blur(10px)}.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+		/* New Clipboard Style */
+		.clipboard-row { display: flex; gap: 8px; margin-bottom: 5px; }
+		.clipboard-row input { flex: 1; text-align: left; }
+		.clipboard-btn { background: var(--card); color: var(--accent); font-weight: 600; padding: 0 12px; border-radius: 10px; border:none; cursor: pointer; white-space: nowrap; }
+        .history-title { font-size: 13px; color: var(--subtext); margin: 8px 4px 4px 4px; font-weight: 500; display:flex; justify-content:space-between; align-items:center; }
+        .history-item { font-size: 14px; color: var(--text); padding: 12px; background: var(--card); border-radius: 10px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 8px; }
+        .history-content { word-break: break-all; line-height: 1.4; max-height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+        .history-actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); padding-top: 8px; opacity: 0.8; }
+        .action-btn { background: none; border: none; font-size: 13px; cursor: pointer; padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; color: var(--subtext); transition: .2s; }
+        .action-btn:active { background: rgba(0,0,0,0.05); }
+        .action-btn.copy { color: var(--accent); }
+        .action-btn.archive { color: #34c759; }
+        .action-btn.delete { color: var(--danger); }
+        #history-expand-btn { width: 100%; text-align: center; padding: 8px; color: var(--subtext); font-size: 13px; cursor: pointer; display: none; }
+		</style></head><body><input type="file" id="upload-input" multiple><header><div style="display:flex;gap:5px;align-items:center"><button class="btn" onclick="triggerUpload()">${t("web_import")}</button><button class="btn btn-icon" onclick="refreshList()" title="Refresh">\u21BB</button></div><h1 id="page-title">${t("web_title")}</h1><div style="display:flex;gap:5px"><button class="btn btn-icon" onclick="toggleTheme()" title="Theme">\u25D1</button><button class="btn" onclick="openEditor('','')">${t("web_new")}</button></div></header>
+		<div class="search-box">
+			<div class="clipboard-row">
+				<input type="text" id="clipboard-input" placeholder="${t("web_clipboard_placeholder")}">
+				<button class="clipboard-btn" onclick="sendClipboard()">${t("web_clipboard_btn")}</button>
+			</div>
+            <div class="history-title">
+                <span>${t("web_clipboard_title")}</span>
+                <span onclick="fetchClipboard()" style="color:var(--accent);cursor:pointer;font-size:12px;">${t("web_clipboard_pull")}</span>
+            </div>
+            
+            <div id="clipboard-history"></div>
+            <div id="history-expand-btn" onclick="toggleHistoryExpand()">\u2B07 ${t("web_clipboard_expand")}</div>
+
+			<input type="text" id="search" placeholder="${t("web_search")}" oninput="filterFiles()" style="margin-top:10px;">
+		</div>
+		<ul id="file-list"></ul><div id="editor"><div class="editor-toolbar"><button class="btn" onclick="closeEditor()">${t("web_close")}</button><span style="font-weight:600;font-size:15px;max-width:120px;overflow:hidden;white-space:nowrap" id="current-filename">${t("web_new")}</span><div class="editor-btn-group"><button class="btn btn-down" onclick="downloadFile()">${t("web_download")}</button><button class="btn btn-save" onclick="saveFile()">${t("web_save")}</button></div></div><input type="text" id="filename-input" placeholder="Filename" style="margin:10px 16px;width:calc(100% - 32px);padding:12px;border-radius:10px;border:none;background:rgba(128,128,128,.1);color:var(--text);font-size:16px;display:none;outline:none"><textarea id="file-content"></textarea></div><div class="toast" id="toast"></div><script>${i18nScript} let allFiles=[],currentFile="",historyExpanded=!1,fullHistory=[];"dark"===localStorage.getItem("theme")&&document.body.classList.add("dark-mode"),refreshList();fetchClipboard();function toggleTheme(){document.body.classList.toggle("dark-mode");const e=document.body.classList.contains("dark-mode");localStorage.setItem("theme",e?"dark":"light")}function refreshList(){const e=document.getElementById("file-list");e.innerHTML='<li style="text-align:center; padding:20px; color:var(--subtext);">'+I18N.connecting+'</li>',fetch("/api/list").then(e=>e.json()).then(t=>{allFiles=t,renderFiles(t)}).catch(()=>{e.innerHTML='<li style="text-align:center; padding:20px; color:red;">'+I18N.disconnect+'</li>'})}
+
+
+
+        let currentFolder = "/";
+
+        function renderFiles(fileList) {
+            const listEl = document.getElementById("file-list");
+            listEl.innerHTML = "";
+            
+            if (fileList.length === 0) {
+                listEl.innerHTML = '<li style="text-align:center; padding:40px; color:var(--subtext);">' + I18N.empty + '</li>';
+                return;
+            }
+
+            // Filter by current folder
+            const visibleFiles = fileList.filter(f => {
+                // If root, find files with parent === '/' or ''
+                const p = f.parent === "/" ? "" : f.parent;
+                const c = currentFolder === "/" ? "" : currentFolder;
+                return p === c && f.path !== c; // specific check to not show self if self is folder
+            });
+            
+            // Add Parent Folder Item if not root
+            if (currentFolder !== "/") {
+                const parentItem = document.createElement("div");
+                parentItem.className = "file-item";
+                parentItem.onclick = () => {
+                    // Go up
+                    const parts = currentFolder.split('/');
+                    parts.pop();
+                    currentFolder = parts.length === 0 || (parts.length === 1 && parts[0] === "") ? "/" : parts.join('/');
+                    renderFiles(allFiles);
+                };
+                parentItem.innerHTML = '<span class="file-name" style="font-weight:bold">\u{1F519} ' + I18N.parentFolder + '</span>';
+                listEl.appendChild(parentItem);
+            }
+
+            const container = document.createElement("div");
+            container.style.marginTop = "10px";
+            
+            visibleFiles.forEach(f => {
+                const t = document.createElement("div");
+                t.className = "file-item";
+
+                // Icon based on type
+                const ext = f.name.split('.').pop().toLowerCase();
+                let icon = f.isDir ? "\u{1F4C2}" : "\u{1F4C4}";
+                if (!f.isDir) {
+                    if (['png','jpg','jpeg','gif','webp','svg'].includes(ext)) icon = "\u{1F5BC}\uFE0F";
+                    else if (['mp3','wav','ogg'].includes(ext)) icon = "\u{1F3B5}";
+                    else if (['mp4','webm'].includes(ext)) icon = "\u{1F3AC}";
+                    else if (['pdf'].includes(ext)) icon = "\u{1F4D1}";
+                    else if (['xls','xlsx','csv'].includes(ext)) icon = "\u{1F4CA}";
+                    else if (['doc','docx'].includes(ext)) icon = "\u{1F4DD}";
+                    else if (['zip','rar','7z'].includes(ext)) icon = "\u{1F4E6}";
+                }
+
+                // Name Area (Clickable)
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "file-name";
+                nameSpan.innerHTML = icon + ' ' + f.name;
+                nameSpan.onclick = () => {
+                    if (f.isDir) {
+                        currentFolder = f.path;
+                        renderFiles(allFiles);
+                    } else {
+                        if (ext === 'md') loadFile(f.path);
+                        else showToast(I18N.error + ": Not supported on web");
+                    }
+                };
+
+                // Actions Area
+                const actionsSpan = document.createElement("span");
+                actionsSpan.className = "file-actions";
+                actionsSpan.style.display = "flex";
+                actionsSpan.style.gap = "10px";
+
+                if (!f.isDir) {
+                    // Rename Btn
+                    const renameBtn = document.createElement("span");
+                    renameBtn.innerText = "\u270F\uFE0F";
+                    renameBtn.style.cursor = "pointer";
+                    renameBtn.style.opacity = "0.6";
+                    renameBtn.title = I18N.rename;
+                    renameBtn.onclick = (evt) => { evt.stopPropagation(); renameFile(f.path); };
+
+                    // Download Btn
+                    const downloadBtn = document.createElement("span");
+                    downloadBtn.innerText = "\u2B07\uFE0F";
+                    downloadBtn.style.cursor = "pointer";
+                    downloadBtn.style.opacity = "0.6";
+                    downloadBtn.title = I18N.download;
+                    downloadBtn.onclick = (evt) => { evt.stopPropagation(); downloadFile(f.path); };
+
+                    // Delete Btn
+                    const delBtn = document.createElement("span");
+                    delBtn.innerText = "\u{1F5D1}\uFE0F";
+                    delBtn.style.cursor = "pointer";
+                    delBtn.style.opacity = "0.6";
+                    delBtn.className = "delete-btn";
+                    delBtn.title = I18N.delete;
+                    delBtn.onclick = (evt) => { evt.stopPropagation(); deleteFile(f.path); };
+
+                    actionsSpan.appendChild(renameBtn);
+                    actionsSpan.appendChild(downloadBtn);
+                    actionsSpan.appendChild(delBtn);
+                }
+
+                t.appendChild(nameSpan);
+                t.appendChild(actionsSpan);
+                container.appendChild(t);
+            });
+            listEl.appendChild(container);
+        }
+
+async function renameFile(oldPath) {
+    const newName = prompt(I18N.rename + ':', pathBasename(oldPath));
+    if (!newName || newName === pathBasename(oldPath)) return;
+    try {
+        const res = await fetch("/api/rename", { method: "POST", body: JSON.stringify({ oldPath, newName }) });
+        if (res.ok) { showToast(I18N.success); refreshList(); } else showToast(I18N.failed);
+    } catch (e) { showToast(I18N.failed); }
+}
+
+async function copyFile(oldPath) {
+    const base = pathBasename(oldPath);
+    // Default name: name_copy.ext
+    const parts = base.split('.');
+    let ext = '';
+    let name = base;
+    if (parts.length > 1) {
+        ext = '.' + parts.pop();
+        name = parts.join('.');
+    }
+    const defaultName = name + "_copy" + ext;
+
+    const newName = prompt(I18N.copy + ':', defaultName);
+    if (!newName) return;
+
+    try {
+        const res = await fetch("/api/copy", { method: "POST", body: JSON.stringify({ oldPath, newName }) });
+        if (res.ok) { showToast(I18N.success); refreshList(); } else showToast(I18N.failed);
+    } catch (e) { showToast(I18N.failed); }
+}
+
+async function deleteFile(path) {
+    if (!confirm(I18N.confirmDelete + "\\n" + path)) return;
+    try {
+        const res = await fetch("/api/delete", { method: "POST", body: JSON.stringify({ path }) });
+        if (res.ok) { showToast(I18N.deleted); refreshList(); } else showToast(I18N.failed);
+    } catch (e) { showToast(I18N.failed); }
+}
+
+function pathBasename(path) {
+    return path.split('/').pop();
+}
+
+// ... existing functions ...
+function filterFiles() {
+    const searchVal = document.getElementById("search").value.toLowerCase();
+    if (!searchVal) {
+        renderFiles(allFiles); 
+        return;
+    }
+    // Search mode: Filter allFiles
+    const filtered = allFiles.filter(f => f.path.toLowerCase().includes(searchVal));
+    // Render these as flat list
+    const listEl = document.getElementById("file-list");
+    listEl.innerHTML = "";
+    const container = document.createElement("div");
+    container.style.marginTop = "10px";
+    filtered.forEach(f => {
+        const t = document.createElement("div");
+        t.className = "file-item";
+        
+        const ext = f.name.split('.').pop().toLowerCase();
+        let icon = f.isDir ? "\u{1F4C2}" : "\u{1F4C4}";
+        if (!f.isDir) {
+            if (['png','jpg','jpeg','gif','webp','svg'].includes(ext)) icon = "\u{1F5BC}\uFE0F";
+            else if (['mp3','wav','ogg'].includes(ext)) icon = "\u{1F3B5}";
+            else if (['mp4','webm'].includes(ext)) icon = "\u{1F3AC}";
+            else if (['pdf'].includes(ext)) icon = "\u{1F4D1}";
+            else if (['xls','xlsx','csv'].includes(ext)) icon = "\u{1F4CA}";
+            else if (['doc','docx'].includes(ext)) icon = "\u{1F4DD}";
+            else if (['zip','rar','7z'].includes(ext)) icon = "\u{1F4E6}";
+        }
+
+        t.onclick = () => { 
+            if (f.isDir) { 
+                currentFolder = f.path; 
+                document.getElementById("search").value = ""; 
+                renderFiles(allFiles); 
+            } else { 
+                if (ext === 'md') loadFile(f.path);
+                else showToast(I18N.error + ": Not supported on web");
+            } 
+        };
+        t.innerHTML = '<span class="file-name">' + icon + ' ' + f.path + '</span>'; // Show full path in search
+        container.appendChild(t);
+    });
+    listEl.appendChild(container);
+}
+
+
+        function triggerUpload() { document.getElementById("upload-input").click(); }
+        
+        async function loadFile(e) { 
+            currentFile = e; 
+            document.getElementById("current-filename").innerText = e; 
+            document.getElementById("filename-input").style.display = "none"; 
+            
+            // Only support MD
+            const textEl = document.getElementById("file-content");
+            textEl.style.display = "block";
+            
+            try {
+                textEl.value = I18N.connecting || "Loading...";
+                const t = await fetch("/api/get?file=" + encodeURIComponent(e)); 
+                if (t.ok) textEl.value = await t.text();
+                else textEl.value = "Error loading file";
+            } catch(err) { textEl.value = "Error loading file"; }
+            
+            document.getElementById("editor").classList.add("open"); 
+        }
+
+        function openEditor(name, content) { 
+            currentFile = ""; 
+            document.getElementById("current-filename").innerText = I18N.new; 
+            document.getElementById("filename-input").style.display = "block"; 
+            document.getElementById("filename-input").value = name || ""; 
+            
+            const textEl = document.getElementById("file-content");
+            textEl.style.display = "block";
+            textEl.value = content || ""; 
+            
+            document.getElementById("editor").classList.add("open"); 
+            setTimeout(() => document.getElementById("filename-input").focus(), 300); 
+        }
+        function closeEditor() { document.getElementById("editor").classList.remove("open"); document.getElementById("filename-input").blur(); document.getElementById("file-content").blur(); }
+        async function saveFile() { let e = currentFile; const content = document.getElementById("file-content").value; 
+            if (!e) { e = document.getElementById("filename-input").value; if (!e) return alert(I18N.error); }
+            if (!e.endsWith(".md")) e += ".md"; 
+            try {
+                const res = await fetch("/api/save", { method: "POST", body: JSON.stringify({ filename: e, content: content }) }); 
+                if (res.ok) { showToast(I18N.saved); if (!currentFile) { currentFile = e; refreshList(); closeEditor(); } } else showToast(I18N.failed); 
+            } catch (err) { showToast(I18N.failed); }
+        }
+        function downloadFile(file) { 
+            const target = file || currentFile;
+            if (!target) return;
+            const e = document.createElement("a"); 
+            e.href = "/api/download?file=" + encodeURIComponent(target); 
+            e.download = target.split('/').pop(); 
+            document.body.appendChild(e); 
+            e.click(); 
+            document.body.removeChild(e); 
+        }
+        function showToast(e) { const t = document.getElementById("toast"); t.innerText = e; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2000); }
+        document.getElementById("upload-input").onchange = async e => { const t = e.target.files; if (!t.length) return; showToast(I18N.uploading); for (const f of t) await fetch("/api/upload?name=" + encodeURIComponent(f.name), { method: "POST", body: f }); showToast(I18N.success); refreshList(); e.target.value = ""; };
+
+// [v2 Feature] Clipboard Function
+async function sendClipboard() {
+    const input = document.getElementById('clipboard-input');
+    const text = input.value;
+    if (!text) return;
+    try {
+        const res = await fetch("/api/clipboard", { method: "POST", body: JSON.stringify({ text }) });
+        if (res.ok) { showToast(I18N.clipboard); input.value = ""; fetchClipboard(); }
+        else { showToast(I18N.failed); }
+    } catch (e) { showToast(I18N.failed); }
+}
+async function fetchClipboard() {
+    try {
+        const res = await fetch("/api/clipboard");
+        const data = await res.json();
+        fullHistory = data.history;
+        renderHistory();
+    } catch (e) { }
+}
+function toggleHistoryExpand() {
+    historyExpanded = !historyExpanded;
+    renderHistory();
+}
+function renderHistory() {
+    const el = document.getElementById('clipboard-history');
+    const btn = document.getElementById('history-expand-btn');
+    el.innerHTML = '';
+
+    if (fullHistory.length === 0) {
+        btn.style.display = 'none';
+        return;
+    }
+
+    const displayList = historyExpanded ? fullHistory : fullHistory.slice(0, 1);
+    btn.style.display = fullHistory.length > 1 ? 'block' : 'none';
+    btn.innerText = historyExpanded ? '\u2B06 ' + I18N.collapse : '\u2B07 ' + I18N.expand;
+
+    displayList.forEach(txt => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+
+        const content = document.createElement('div');
+        content.className = 'history-content';
+        content.innerText = txt;
+
+        const actions = document.createElement('div');
+        actions.className = 'history-actions';
+
+        const btnCopy = document.createElement('button');
+        btnCopy.className = 'action-btn copy';
+        btnCopy.innerText = '\u{1F4CB} Copy';
+        btnCopy.onclick = (e) => {
+            e.stopPropagation();
+            copyTextToClipboard(txt);
+        };
+
+        const btnArchive = document.createElement('button');
+        btnArchive.className = 'action-btn archive';
+        btnArchive.innerText = '\u{1F4BE} Archive';
+        btnArchive.onclick = async (e) => {
+            e.stopPropagation();
+            try {
+                const res = await fetch("/api/clipboard/archive", { method: "POST", body: JSON.stringify({ text: txt }) });
+                if (res.ok) showToast(I18N.archiveToast);
+                else showToast(I18N.failed);
+            } catch (e) { showToast(I18N.failed); }
+        };
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'action-btn delete';
+        btnDel.innerText = '\u{1F5D1}\uFE0F';
+        btnDel.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm('Delete?')) return;
+            try {
+                const res = await fetch("/api/clipboard", { method: "POST", body: JSON.stringify({ text: txt, action: 'delete' }) });
+                if (res.ok) { showToast(I18N.deleted); fetchClipboard(); }
+                else showToast(I18N.failed);
+            } catch (e) { showToast(I18N.failed); }
+        };
+
+        actions.appendChild(btnCopy);
+        actions.appendChild(btnArchive);
+        actions.appendChild(btnDel);
+
+        item.appendChild(content);
+        item.appendChild(actions);
+        el.appendChild(item);
+    });
+}
+function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => showToast(I18N.copyToast)).catch(() => fallbackCopy(text));
+    } else {
+        fallbackCopy(text);
+    }
+}
+function fallbackCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast(I18N.copyToast);
+    } catch (err) {
+        showToast(I18N.failed);
+    }
+    document.body.removeChild(textArea);
+}
+<\/script></body > </html>`;
   }
 };
 var LanEditorSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -2431,7 +3078,6 @@ var LanEditorSettingTab = class extends import_obsidian.PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
   }
-  // [Fix 5] Display should not be async
   display() {
     const { containerEl } = this;
     containerEl.empty();
